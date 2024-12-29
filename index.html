@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rhombus vs Triangle</title>
+    <style>
+        body {
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f0f0f0;
+        }
+
+        .container {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+        }
+
+        /* Image styles */
+        img {
+            position: absolute;
+            transition: top 0.1s ease, left 0.1s ease;
+        }
+
+        /* Rhombus image */
+        .rhombus {
+            width: 100px;
+            height: 100px;
+            object-fit: cover;
+        }
+
+        /* Triangle image */
+        .triangle {
+            width: 100px;
+            height: 100px;
+            object-fit: cover;
+        }
+
+        /* Score display */
+        #score {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            font-size: 24px;
+            color: black;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <!-- Replace the divs with img elements for your images -->
+        <img src="bidan.jpg" alt="Rhombus" class="rhombus">
+        <img src="skibidiyonyon.jpg" alt="Triangle" class="triangle">
+        <div id="score">Score: 0</div>
+    </div>
+
+    <script>
+        const rhombus = document.querySelector('.rhombus');
+        const triangle = document.querySelector('.triangle');
+        const scoreDisplay = document.getElementById('score');
+
+        let rhombusPosition = { x: 50, y: 50 };  // Position in percentage
+        let trianglePosition = { x: 50, y: 50 };  // Position in percentage
+        let triangleTarget = { x: 50, y: 50 };  // Target position for the triangle
+        let speed = 0.5;  // Speed of movement for the rhombus
+        let triangleSpeed = 4.0;  // Increased speed for the triangle (much faster now)
+        let movement = { up: false, down: false, left: false, right: false };
+        let score = 0;
+
+        // Function to update the position of the rhombus
+        function moveRhombus() {
+            if (movement.up) rhombusPosition.y -= speed;
+            if (movement.down) rhombusPosition.y += speed;
+            if (movement.left) rhombusPosition.x -= speed;
+            if (movement.right) rhombusPosition.x += speed;
+
+            // Keep the rhombus within the container bounds
+            rhombusPosition.x = Math.max(0, Math.min(100, rhombusPosition.x));
+            rhombusPosition.y = Math.max(0, Math.min(100, rhombusPosition.y));
+
+            // Update the rhombus's CSS position
+            rhombus.style.left = `${rhombusPosition.x}%`;
+            rhombus.style.top = `${rhombusPosition.y}%`;
+
+            checkCollision();
+            requestAnimationFrame(moveRhombus);
+        }
+
+        // Function to check for collision between the rhombus and triangle
+        function checkCollision() {
+            const rhombusRect = rhombus.getBoundingClientRect();
+            const triangleRect = triangle.getBoundingClientRect();
+
+            if (
+                rhombusRect.left < triangleRect.right &&
+                rhombusRect.right > triangleRect.left &&
+                rhombusRect.top < triangleRect.bottom &&
+                rhombusRect.bottom > triangleRect.top
+            ) {
+                score++;
+                scoreDisplay.textContent = `Score: ${score}`;
+                resetTrianglePosition();
+            }
+        }
+
+        // Function to reset the triangle position to a new random location
+        function resetTrianglePosition() {
+            trianglePosition = {
+                x: Math.random() * 90,  // Random position (90 to avoid going out of bounds)
+                y: Math.random() * 90,
+            };
+            triangle.style.left = `${trianglePosition.x}%`;
+            triangle.style.top = `${trianglePosition.y}%`;
+        }
+
+        // Function to move the triangle smoothly, trying to avoid the rhombus
+        function moveTriangle() {
+            const dx = rhombusPosition.x - trianglePosition.x;
+            const dy = rhombusPosition.y - trianglePosition.y;
+
+            const distance = Math.sqrt(dx * dx + dy * dy);
+            const moveDistance = Math.min(triangleSpeed, distance); // Triangle should move faster
+
+            // Calculate the direction to move away from the rhombus
+            triangleTarget.x = trianglePosition.x - (dx / distance) * moveDistance;
+            triangleTarget.y = trianglePosition.y - (dy / distance) * moveDistance;
+
+            // Update triangle's position
+            trianglePosition.x += (triangleTarget.x - trianglePosition.x) * triangleSpeed / distance;
+            trianglePosition.y += (triangleTarget.y - trianglePosition.y) * triangleSpeed / distance;
+
+            // Keep the triangle within the container bounds
+            if (trianglePosition.x < 0) trianglePosition.x = 0;
+            if (trianglePosition.x > 100) trianglePosition.x = 100;
+            if (trianglePosition.y < 0) trianglePosition.y = 0;
+            if (trianglePosition.y > 100) trianglePosition.y = 100;
+
+            // Update triangle's position
+            triangle.style.left = `${trianglePosition.x}%`;
+            triangle.style.top = `${trianglePosition.y}%`;
+
+            // Request the next frame for continuous triangle movement
+            requestAnimationFrame(moveTriangle);
+        }
+
+        // Keydown event handler to set movement flags for the rhombus
+        function keyDownHandler(event) {
+            if (event.key === 'w' || event.key === 'W') movement.up = true;
+            if (event.key === 's' || event.key === 'S') movement.down = true;
+            if (event.key === 'a' || event.key === 'A') movement.left = true;
+            if (event.key === 'd' || event.key === 'D') movement.right = true;
+        }
+
+        // Keyup event handler to stop movement in the given direction
+        function keyUpHandler(event) {
+            if (event.key === 'w' || event.key === 'W') movement.up = false;
+            if (event.key === 's' || event.key === 'S') movement.down = false;
+            if (event.key === 'a' || event.key === 'A') movement.left = false;
+            if (event.key === 'd' || event.key === 'D') movement.right = false;
+        }
+
+        // Start the movement loops
+        window.addEventListener('keydown', keyDownHandler);
+        window.addEventListener('keyup', keyUpHandler);
+
+        // Start the movement loops
+        moveRhombus();
+        moveTriangle();
+
+    </script>
+
+</body>
+</html>
